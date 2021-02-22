@@ -1,6 +1,14 @@
 # High Level API: TextDetectionModel and TextRecognitionModel {#tutorial_dnn_text_spotting}
 
+@tableofcontents
+
 @prev_tutorial{tutorial_dnn_OCR}
+@next_tutorial{pytorch_cls_tutorial_dnn_conversion}
+
+|    |    |
+| -: | :- |
+| Original author | Wenqing Zhang |
+| Compatibility | OpenCV >= 4.5 |
 
 ## Introduction
 In this tutorial, we will introduce the APIs for TextRecognitionModel and TextDetectionModel in detail.

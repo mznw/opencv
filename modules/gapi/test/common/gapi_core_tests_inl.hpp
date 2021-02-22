@@ -18,10 +18,10 @@ namespace opencv_test
 namespace
 {
 template <typename Elem>
-inline bool compareVectorsAbsExact(const std::vector<Elem>& outOCV,
-                                   const std::vector<Elem>& outGAPI)
+inline bool compareVectorsAbsExact(const std::vector<Elem>& outGAPI,
+                                   const std::vector<Elem>& outOCV)
 {
-    return AbsExactVector<Elem>().to_compare_f()(outOCV, outGAPI);
+    return AbsExactVector<Elem>().to_compare_f()(outGAPI, outOCV);
 }
 }
 
@@ -1297,7 +1297,11 @@ TEST_P(PhaseTest, AccuracyTest)
     // Comparison //////////////////////////////////////////////////////////////
     // FIXME: use a comparison functor instead (after enabling OpenCL)
     {
+#if defined(__aarch64__) || defined(__arm__)
+        EXPECT_NEAR(0, cvtest::norm(out_mat_ocv, out_mat_gapi, NORM_INF), 4e-6);
+#else
         EXPECT_EQ(0, cvtest::norm(out_mat_ocv, out_mat_gapi, NORM_INF));
+#endif
     }
 }
 
@@ -1898,6 +1902,39 @@ TEST_P(SizeRTest, ParseTest)
     auto out = cv::gapi::streaming::size(op_rect);
     cv::GComputation c(cv::GIn(op_rect), cv::GOut(out));
     c.apply(cv::gin(rect), cv::gout(out_sz), getCompileArgs());
+
+    EXPECT_EQ(out_sz, sz);
+}
+
+namespace {
+    class TestMediaBGR final : public cv::MediaFrame::IAdapter {
+        cv::Mat m_mat;
+
+    public:
+        explicit TestMediaBGR(cv::Mat m)
+            : m_mat(m) {
+        }
+        cv::GFrameDesc meta() const override {
+            return cv::GFrameDesc{ cv::MediaFormat::BGR, cv::Size(m_mat.cols, m_mat.rows) };
+        }
+        cv::MediaFrame::View access(cv::MediaFrame::Access) override {
+            cv::MediaFrame::View::Ptrs pp = { m_mat.ptr(), nullptr, nullptr, nullptr };
+            cv::MediaFrame::View::Strides ss = { m_mat.step, 0u, 0u, 0u };
+            return cv::MediaFrame::View(std::move(pp), std::move(ss));
+        }
+    };
+};
+
+TEST_P(SizeMFTest, ParseTest)
+{
+    cv::Size out_sz;
+    cv::Mat bgr = cv::Mat::eye(sz.height, sz.width, CV_8UC3);
+    cv::MediaFrame frame = cv::MediaFrame::Create<TestMediaBGR>(bgr);
+
+    cv::GFrame in;
+    auto out = cv::gapi::streaming::size(in);
+    cv::GComputation c(cv::GIn(in), cv::GOut(out));
+    c.apply(cv::gin(frame), cv::gout(out_sz), getCompileArgs());
 
     EXPECT_EQ(out_sz, sz);
 }

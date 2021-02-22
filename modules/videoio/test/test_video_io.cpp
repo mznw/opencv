@@ -239,6 +239,11 @@ public:
         if (!isBackendAvailable(apiPref, cv::videoio_registry::getStreamBackends()))
             throw SkipTestException(cv::String("Backend is not available/disabled: ") + cv::videoio_registry::getBackendName(apiPref));
 
+        // GStreamer: https://github.com/opencv/opencv/issues/19025
+        if (apiPref == CAP_GSTREAMER)
+            throw SkipTestException(cv::String("Backend ") +  cv::videoio_registry::getBackendName(apiPref) +
+                    cv::String(" does not return reliable values for CAP_PROP_POS_MSEC property"));
+
         if (((apiPref == CAP_FFMPEG) && ((ext == "h264") || (ext == "h265"))))
             throw SkipTestException(cv::String("Backend ") +  cv::videoio_registry::getBackendName(apiPref) +
                     cv::String(" does not support CAP_PROP_POS_MSEC option"));
@@ -255,10 +260,12 @@ public:
             double timestamp = 0;
             ASSERT_NO_THROW(cap >> img);
             EXPECT_NO_THROW(timestamp = cap.get(CAP_PROP_POS_MSEC));
+            if (cvtest::debugLevel > 0)
+                std::cout << "i = " << i << ": timestamp = " << timestamp << std::endl;
             const double frame_period = 1000.f/bunny_param.getFps();
             // NOTE: eps == frame_period, because videoCapture returns frame begining timestamp or frame end
             // timestamp depending on codec and back-end. So the first frame has timestamp 0 or frame_period.
-            EXPECT_NEAR(timestamp, i*frame_period, frame_period);
+            EXPECT_NEAR(timestamp, i*frame_period, frame_period) << "i=" << i;
         }
     }
 };
@@ -608,5 +615,38 @@ static vector<Ext_Fourcc_API> generate_Ext_Fourcc_API_nocrash()
 }
 
 INSTANTIATE_TEST_CASE_P(videoio, Videoio_Writer_bad_fourcc, testing::ValuesIn(generate_Ext_Fourcc_API_nocrash()));
+
+typedef testing::TestWithParam<VideoCaptureAPIs> safe_capture;
+
+TEST_P(safe_capture, frames_independency)
+{
+    VideoCaptureAPIs apiPref = GetParam();
+    if (!videoio_registry::hasBackend(apiPref))
+        throw SkipTestException(cv::String("Backend is not available/disabled: ") + cv::videoio_registry::getBackendName(apiPref));
+
+    VideoCapture cap;
+    String video_file = BunnyParameters::getFilename(String(".avi"));
+    EXPECT_NO_THROW(cap.open(video_file, apiPref));
+    if (!cap.isOpened())
+    {
+        std::cout << "SKIP test: backend " << apiPref << " can't open the video: " << video_file << std::endl;
+        return;
+    }
+
+    Mat frames[10];
+    Mat hardCopies[10];
+    for(int i = 0; i < 10; i++)
+    {
+        ASSERT_NO_THROW(cap >> frames[i]);
+        EXPECT_FALSE(frames[i].empty());
+        hardCopies[i] = frames[i].clone();
+    }
+
+    for(int i = 0; i < 10; i++)
+        EXPECT_EQ(0, cv::norm(frames[i], hardCopies[i], NORM_INF)) << i;
+}
+
+static VideoCaptureAPIs safe_apis[] = {CAP_FFMPEG, CAP_GSTREAMER, CAP_MSMF,CAP_AVFOUNDATION};
+INSTANTIATE_TEST_CASE_P(videoio, safe_capture, testing::ValuesIn(safe_apis));
 
 } // namespace

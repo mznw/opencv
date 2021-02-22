@@ -510,14 +510,6 @@ GAPI_OCV_KERNEL(GCPUCrop, cv::gapi::core::GCrop)
     }
 };
 
-GAPI_OCV_KERNEL(GCPUCopy, cv::gapi::core::GCopy)
-{
-    static void run(const cv::Mat& in, cv::Mat& out)
-    {
-        in.copyTo(out);
-    }
-};
-
 GAPI_OCV_KERNEL(GCPUConcatHor, cv::gapi::core::GConcatHor)
 {
     static void run(const cv::Mat& in1, const cv::Mat& in2, cv::Mat& out)
@@ -700,6 +692,14 @@ GAPI_OCV_KERNEL(GCPUSizeR, cv::gapi::streaming::GSizeR)
     }
 };
 
+GAPI_OCV_KERNEL(GCPUSizeMF, cv::gapi::streaming::GSizeMF)
+{
+    static void run(const cv::MediaFrame& in, cv::Size& out)
+    {
+        out = in.desc().size;
+    }
+};
+
 cv::gapi::GKernelPackage cv::gapi::core::cpu::kernels()
 {
     static auto pkg = cv::gapi::kernels
@@ -762,7 +762,6 @@ cv::gapi::GKernelPackage cv::gapi::core::cpu::kernels()
          , GCPURemap
          , GCPUFlip
          , GCPUCrop
-         , GCPUCopy
          , GCPUConcatHor
          , GCPUConcatVert
          , GCPULUT
@@ -780,6 +779,7 @@ cv::gapi::GKernelPackage cv::gapi::core::cpu::kernels()
          , GCPUParseYolo
          , GCPUSize
          , GCPUSizeR
-         >();
+         , GCPUSizeMF
+        >();
     return pkg;
 }

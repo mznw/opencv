@@ -241,6 +241,10 @@ namespace cv {
                     {
                         activation_param.type = "Sigmoid";
                     }
+                    else if (type == "tanh")
+                    {
+                        activation_param.type = "TanH";
+                    }
                     else
                     {
                         CV_Error(cv::Error::StsParseError, "Unsupported activation: " + type);
@@ -620,7 +624,7 @@ namespace cv {
                             // read section
                             read_net = false;
                             ++layers_counter;
-                            const size_t layer_type_size = line.find("]") - 1;
+                            const size_t layer_type_size = line.find(']') - 1;
                             CV_Assert(layer_type_size < line.size());
                             std::string layer_type = line.substr(1, layer_type_size);
                             net->layers_cfg[layers_counter]["layer_type"] = layer_type;

@@ -328,11 +328,6 @@ GMat crop(const GMat& src, const Rect& rect)
     return core::GCrop::on(src, rect);
 }
 
-GMat copy(const GMat& src)
-{
-    return core::GCopy::on(src);
-}
-
 GMat concatHor(const GMat& src1, const GMat& src2)
 {
     return core::GConcatHor::on(src1, src2);
@@ -430,6 +425,11 @@ GOpaque<Size> streaming::size(const GMat& src)
 GOpaque<Size> streaming::size(const GOpaque<Rect>& r)
 {
     return streaming::GSizeR::on(r);
+}
+
+GOpaque<Size> streaming::size(const GFrame& src)
+{
+    return streaming::GSizeMF::on(src);
 }
 
 } //namespace gapi
