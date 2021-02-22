@@ -1,3 +1,4 @@
+//Tencent is pleased to support the open source community by making PersonReid samples available.
 //
 // You can download a baseline ReID model and sample input from:
 // https://github.com/ReID-Team/ReID_extra_testdata
@@ -9,7 +10,7 @@
 //         Fufu Yu <fufuyu@tencent.com>
 //         Enwei Zhang <miyozhang@tencent.com>
 //
-// Copyright (C) 2020-2021, Tencent.
+// Copyright (C) 2020-2021, THL A29 Limited, a Tencent company. All rights reserved.
 // Copyright (C) 2020-2021, SUSTech.
 //
 #include <iostream>
